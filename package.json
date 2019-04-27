@@ -1,6 +1,6 @@
 {
   "name": "loomify",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "An easy way to parse C/C++ source code to JSON format to be used by the Loom Configurator.",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -18,7 +18,7 @@
   ],
   "author": "OPEnSLab-OSU",
   "license": " GPL-3.0",
-	"main": "index.js",
+  "main": "index.js",
   "bugs": {
     "url": "https://github.com/OPEnSLab-OSU/Loom_Configurator/issues"
   },

@@ -1,5 +1,7 @@
 [![OPEnS Logo](https://static1.squarespace.com/static/57dade3e893fc0962ff46311/t/5a26fdb40852293a2b6e17a4/1512504757858/OPEnSLogo1d.png)](http://www.open-sensing.org)
 
+**This package is still in alpha stage, any and all bugs should be expected**
+
   An easy way to parse C/C++ source code to JSON format to be used by the Loom Configurator.
 	This package provides the core functionality that allows the Loom Configurator to interact with the Loom Library repo and parse tags to JSON.    
 

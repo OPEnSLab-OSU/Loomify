@@ -2,8 +2,8 @@
 
 **This package is still in alpha stage, any and all bugs should be expected**
 
-  An easy way to parse C/C++ source code to JSON format to be used by the Loom Configurator.
-	This package provides the core functionality that allows the Loom Configurator to interact with the Loom Library repo and parse tags to JSON.    
+An easy way to parse C/C++ source code to JSON format to be used by the Loom Configurator.
+This package provides the core functionality that allows the Loom Configurator to interact with the Loom Library repo and parse tags to JSON.    
 
 
 ```js
@@ -31,15 +31,16 @@ $ npm install loomify
 
 ## Current Features
 
-  * Easily access constructor parameter data
-  * JSON data format is portable and easy to manipulate
+* Easily access constructor parameter data
+* JSON data format is portable and easy to manipulate
 
-## Docs & Community
+## Docs & Community  
 
-	This package is published by OPEnS Lab at Oregon State University. It is a usability extension of the Loom library for Arduino programming.
-  * [Website](http://www.open-sensing.org/project-loom)
-  * [GitHub Organization](https://github.com/OPEnSLab-OSU) for all OPEnS Lab projects
-	* [GitHub Project](https://github.com/OPEnSLab-OSU/Loom) for the latest version of Loom
+This package is published by OPEnS Lab at Oregon State University. It provides back-end support for parsing Loom source files and interacting with the Loom GitHub repo.
+* [Website](http://www.open-sensing.org/project-loom)
+* [GitHub Organization](https://github.com/OPEnSLab-OSU) for all OPEnS Lab projects
+* [GitHub Project](https://github.com/OPEnSLab-OSU/Loom) for the latest version of Loom
+* [GitHub Package](https://github.com/OPEnSLab-OSU/Loomify.git) for latest version of Loomify
 
 
 ## Quick Start
@@ -85,14 +86,12 @@ The resulting json data returned by loomify.parse() matches the following format
 }
 ```
 
-
-
 #### Loomify Tag Format  
 The Loomify package is designed to look for C/C++ header files (any file ending in .h), and parse constructor parameters into a JSON data format. It will look for any data that follows the specific Loomify Tag Format (LTF)  
 
 The tags that loomify.parse() looks for **must** use the following format.   
 ##### Top level class tag
-	Toward the top of each header file, immediately before the the class declaration, put text that matches the following format:
+Toward the top of each header file, immediately before the the class declaration, put text that matches the following format:
 
 ```C++
 // ### (<inheritFromModule>) | dependencies: [] | conflicts: []
@@ -120,7 +119,7 @@ Immediately before the constructor for your class put text that matches the foll
 ```C++
 /// <moduleName> module constructor.
 ///
-/// \param[<in,out>] <paramName>	<paramDataType> | <paramValue> | <paramRange> | <Description of param>
+/// \param[<in,out>] <paramName> <paramDataType> | <paramValue> | <paramRange> | <Description of param>
 /// ...
 /// ...
 ```
@@ -135,9 +134,9 @@ Example found in Loom_OLED class.
 ```C++
 /// OLED module constructor.
 ///
-/// \param[in]	module_name					String | <"OLED"> | null | OLED module name
+/// \param[in]	module_name	String | <"OLED"> | null | OLED module name
 /// \param[in]	enable_rate_filter	Bool | <true> | {true, false} | Whether or not to impose maximum update rate
-/// \param[in]	min_filter_delay		Int | <300> | [50-5000] | Minimum update delay, if enable_rate_filter enabled
+/// \param[in]	min_filter_delay	Int | <300> | [50-5000] | Minimum update delay, if enable_rate_filter enabled
 /// ...
 /// ...
 ```

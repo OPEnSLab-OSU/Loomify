@@ -1,0 +1,33 @@
+{
+  "name": "loomify",
+  "version": "1.0.2",
+  "description": "An easy way to parse C/C++ source code to JSON format to be used by the Loom Configurator.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OPEnSLab-OSU/Loom_Configurator.git"
+  },
+  "keywords": [
+    "loomify",
+    "loom",
+    "opens",
+    "opens-lab",
+    "osu"
+  ],
+  "author": "OPEnSLab-OSU",
+  "license": " GPL-3.0",
+	"main": "index.js",
+  "bugs": {
+    "url": "https://github.com/OPEnSLab-OSU/Loom_Configurator/issues"
+  },
+  "homepage": "https://github.com/OPEnSLab-OSU/Loom_Configurator#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "express-handlebars": "^3.0.2",
+    "npm": "^6.9.0",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.7"
+  }
+}

@@ -2,7 +2,6 @@
 
 **This package is still in alpha stage, any and all bugs should be expected**
 
-An easy way to parse C/C++ source code to JSON format to be used by the Loom Configurator.
 This package provides the core functionality that allows the Loom Configurator to interact with the Loom Library repo and parse tags to JSON.    
 
 
@@ -13,6 +12,15 @@ loomify.parse('path/to/directory', (data) => {
 	/* Do something with data */
 	/* By default parse() writes data to test.json */
 })
+
+loomify.load_json_file('<dependencies.json>')
+   .then((json_obj) => {
+
+      /* Modify obj if desired */
+
+      loomify.get_dependencies(json_obj);
+      /* writes all dependencies to tmp/ in local directory */
+   })
 ```
 
 ## Installation
@@ -33,6 +41,7 @@ $ npm install loomify
 
 * Easily access constructor parameter data
 * JSON data format is portable and easy to manipulate
+* Use loom_dependencies.json to download most current libraries needed by Loom
 
 ## Docs & Community  
 

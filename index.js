@@ -12,6 +12,10 @@
 // required modules
 const rpn = require('request-promise-native');
 const fs = require('fs');
+const util = require('util');
+
+
+
 
 const master_json = {
 	'general': {},
@@ -19,6 +23,129 @@ const master_json = {
 };
 
 
+exports.load_json_file = (json_file) =>{
+   return new Promise((resolve, reject) => {
+      fs.readFile(json_file, 'utf8', (err, data) => {
+         if(err){
+            reject(err);
+         }
+         else {
+            let json = JSON.parse(data)
+            resolve(json)
+         }
+      });
+   });
+}
+
+
+exports.get_dependencies = (json_obj) => {
+   let apiLibs = json_obj.githubAPI;
+   let directLibs = json_obj.direct;
+   let daSpecial = json_obj.special;
+   let git_urls = [];
+   let dl_dir = './tmp'
+
+   fs.mkdir(dl_dir, (err) =>{
+      if(err){
+         console.log(err);
+      }
+   });
+
+   // read github urls and prep for request
+   apiLibs.forEach( (lib_obj) => {
+      if(lib_obj.repos.length > 1){
+         lib_obj.repos.forEach( (repo) =>{
+            let url = new URL(util.format('repos/%s/%s', lib_obj.owner, repo),'https://api.github.com/')
+            git_urls.push({
+               'library': repo,
+               'url': url
+               }
+            );
+         })
+      }
+      else{
+         let url = new URL(util.format('repos/%s/%s', lib_obj.owner, lib_obj.repos[0]),'https://api.github.com/')
+         git_urls.push({
+            'library': lib_obj.repos[0],
+            'url': url
+            }
+         );
+      }
+   });
+
+   // download each zip with github api
+   git_urls.forEach( (obj) =>{
+      let options = {
+         'uri':  util.format('%s/%s/%s', obj.url.href, 'zipball', 'master'),
+         'headers': {
+            'User-Agent': 'Loomify'
+         },
+         'json': true,
+      };
+
+      let file_name = util.format('%s.%s', obj.library, 'zip');
+      console.log(options.uri);
+      rpn(options)
+         .pipe( fs.createWriteStream(dl_dir + '/' + file_name) )
+         .on('close', () =>{
+            console.log( file_name + ' written');
+         });
+
+   })
+
+   // download each direct download
+   directLibs.forEach( (lib_obj) => {
+      let options = {
+         'uri': lib_obj.url,
+         'headers': {
+            'User-Agent': 'Loomify'
+         },
+         'json': true,
+      };
+
+      let file_name = util.format('%s.%s', lib_obj.library, 'zip');
+      console.log(options.uri);
+      rpn(options)
+         .pipe( fs.createWriteStream(dl_dir + '/' + file_name) )
+         .on('close', () =>{
+            console.log( file_name + ' written');
+         });
+   })
+
+   // download each special case file
+   daSpecial.forEach( (lib_obj) => {
+      // let url = new URL(util.format('repos/%s/%s', lib_obj.owner, lib_obj.repos[0]),'https://api.github.com/')
+      let lib_name = lib_obj.repos[0];
+      let options = {
+         'uri': util.format('%s/repos/%s/%s/%s','https://api.github.com', lib_obj.owner, lib_name, lib_obj.path),
+         'headers': {
+            'User-Agent': 'Loomify'
+         },
+         'json': true,
+      };
+
+      rpn(options)
+         .then((context) => {
+            let dir = lib_name;
+            fs.mkdir(dl_dir + '/' + dir, (err) => {
+               if(err){
+                  console.log(err);
+               }
+               else{
+                  context.forEach((file_obj) =>{
+                     options.uri = file_obj.download_url
+                     rpn(options)
+                        .pipe( fs.createWriteStream(util.format('%s/%s/%s', dl_dir, dir, file_obj.name) ))
+                        .on('close', () => {
+                           console.log(file_obj.name + ' written' );
+                        });
+                  })
+               }
+            })
+         })
+   })
+
+}
 
 // loom_github object with methods that use promises
 var loom_github = {
@@ -34,10 +161,6 @@ var loom_github = {
   }
 };
 
-
-exports.auth = function(){
-  return loom_github.auth;
-};
 
 exports.init = (params) => {
   loom_github.branch = params.branch;
@@ -93,8 +216,8 @@ exports.getFile = (params) => {
 
 
 // ========================================================================== //
-// ===																																		=== //
-// ===							Begin json parser functions parser										=== //
+// ===                                                                     === //
+// ===							Begin json parser functions parser					=== //
 // ========================================================================== //
 /*
 * This program demos a possible implementation for reading/parsing
@@ -349,7 +472,7 @@ Object.prototype.isEmpty = function() {
 
 
 // ========================================================================== //
-// 												parse(<dir>, <callback()>)											=== //
+// 					parse(<dir>, <callback()>)											=== //
 // ========================================================================== //
 
 exports.parse = function(dir, callback) {

@@ -1,21 +1,12 @@
 const loomify = require('../index.js');
 
-
-loomify.load_json_file('loom_dependencies.json')
-   .then((json_obj) => {
-      console.log(json_obj);
-      loomify.get_dependencies(json_obj);
-   })
-
-
 var dependencies = {
    'special': [
       {
+         'source': 'github',
          'owner': 'jrowberg',
-         'repos': [
-            'i2cdevlib',
-         ],
-         'path': 'contents/Arduino/I2Cdev'
+         'library': 'i2cdevlib',
+         'path': 'contents/Arduino/I2Cdev',
       },
    ],
    'direct': [
@@ -110,12 +101,6 @@ var dependencies = {
          ]
       },
       {
-         'owner': 'FabioCuomo',
-         'repos': [
-            'FabioCuomo-DS3231'
-         ]
-      },
-      {
          'owner': 'sparkfun',
          'repos': [
             'SparkFun_AS726X_Arduino_Library',
@@ -123,6 +108,32 @@ var dependencies = {
             'SparkFun_AS7265X_Arduino_Library',
             'SparkFun_ZX_Distance_and_Gesture_Sensor_Arduino_Library',
          ]
-      }
+      },
+      {
+         'owner': 'OPEnSLab-OSU',
+         'repos': [
+            'OPEnS_RTC',
+         ]
+      },
    ]
 }
+
+// loomify.write_to_json('loom_dependencies', dependencies)
+//    .then((results) => {
+//       console.log(results);
+//    })
+//    .catch((err) =>{
+//       console.log(err);
+//    })
+
+loomify.load_json_file('loom_dependencies.json')
+   .then((json_obj) => {
+      // console.log(json_obj);
+      loomify.get_dependencies(json_obj)
+         .catch((err) => {
+            console.log(err);
+         })
+   })
+   .catch((err) =>{
+      console.log(err);
+   })

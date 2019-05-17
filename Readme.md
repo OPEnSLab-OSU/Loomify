@@ -7,20 +7,6 @@ This package provides the core functionality that allows the Loom Configurator t
 
 ```js
 var loomify = require('loomify')
-
-loomify.parse('path/to/directory', (data) => {
-	/* Do something with data */
-	/* By default parse() writes data to test.json */
-})
-
-loomify.load_json_file('<dependencies.json>')
-   .then((json_obj) => {
-
-      /* Modify obj if desired */
-
-      loomify.get_dependencies(json_obj);
-      /* writes all dependencies to tmp/ in local directory */
-   })
 ```
 
 ## Installation
@@ -54,9 +40,77 @@ This package is published by OPEnS Lab at Oregon State University. It provides b
 
 ## Quick Start
 
-**Currently only the parse() method is available for use**  
+```js
 
-#### JSON Format  
+// Function to quickly create new .json file
+loomify.write_to_json('<file_name>', '<json_obj>'){
+   .then((results) => {
+      console.log(results);
+   })
+   .catch((err) =>{
+      console.log(err);
+   })
+}
+
+loomify.load_json_file('<dependencies.json>')
+   .then((json_obj) => {
+
+      /* writes all dependencies to tmp/ in local directory */
+      loomify.get_dependencies(json_obj);
+
+   .catch((err) => {
+      console.log(err);
+   })
+   
+})
+
+// For use by configurator app to instantiate Loom modules
+loomify.parse('path/to/directory', (data) => {
+	/* Do something with data */
+	/* By default parse() writes data to test.json */
+})
+
+```
+
+
+### JSON Format
+The json format of the loom dependencies file matches the following format.
+```js
+{
+   'githubAPI': [
+      {
+         'owner': 'adafruit',
+         'repos': [
+            'Adafruit-GFX-Library',
+            'Adafruit-PWM-Servo-Driver-Library',
+            'Adafruit_ASFcore',
+         ]
+      }
+   ],
+   'direct': [
+      {
+         'library': 'RadioHead-1.89',
+         'url': 'http://www.airspayce.com/mikem/arduino/RadioHead/RadioHead-1.89.zip'
+      }
+   ],
+   'special': [
+      {
+         'source': 'github',
+         'owner': 'jrowberg',
+         'library': 'i2cdevlib',
+         'path': 'contents/Arduino/I2Cdev',
+      }
+   ]
+}
+```
+***gitHubAPI***: This key maps to an array of objects representing github repositories. For each owner of a repo, an object contains the owners name, and an array of repo names.
+
+***special***: This key maps to an array of objects for which custom methods must be used to retrieve the data. Currently only github source is supported.
+
+***direct***: This key maps to an array of objects representing direct download links.     
+
+
+### Parse json format
 The resulting json data returned by loomify.parse() matches the following format, example from LoRa.h  
 ```js
 { general: {

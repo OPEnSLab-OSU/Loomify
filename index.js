@@ -14,6 +14,8 @@ const rpn = require('request-promise-native');
 const fs = require('fs');
 const util = require('util');
 const validate = require('validator')
+const archiver = require('archiver');
+const unzipper = require('unzipper')
 
 const master_json = {
 	'general': {},
@@ -21,8 +23,9 @@ const master_json = {
 };
 
 
-exports.write_to_json = (file_name, json_obj) =>{
-   return new Promise((resolve, reject) =>{
+exports.write_to_json = (file_name, json_obj) => {
+   return new Promise((resolve, reject) => {
+      // validate file_name as string
       if(!json_obj || !file_name)
          reject('func usage: write_to_json(<file_name>, <json_obj>)');
       if(typeof(file_name) != 'string')
@@ -48,8 +51,10 @@ exports.write_to_json = (file_name, json_obj) =>{
 }
 
 
-exports.load_json_file = (json_file) =>{
+exports.load_json_file = (json_file) => {
    return new Promise((resolve, reject) => {
+      console.log(json_file);
+      // validate that a json_file is a string
       if(typeof(json_file) != 'string')
          reject(util.format('%s%s', 'filename must be a string, type: ', typeof(file_name)));
       if(json_file.split('.').pop() != 'json')
@@ -68,111 +73,182 @@ exports.load_json_file = (json_file) =>{
 }
 
 
-exports.get_dependencies = (json_obj) => {
-   let apiLibs = json_obj.githubAPI;
-   let directLibs = json_obj.direct;
-   let daSpecial = json_obj.special;
-   let git_urls = [];
-   let dl_dir = './tmp';
-   var files_written = [];
+exports.get_dependencies = (json_obj, version) => {
+   if(version == 'stable'){
 
-   return new Promise((resolve, reject) => {
+      let git_urls = [];
+      let dl_dir = './tmp';
+      var files_written = [];
+
       fs.mkdir(dl_dir, (err) => {
-         if(err)
+         if(err){
             reject(err);
-      });
+         }
+      })
 
-      // read github urls and prep for request
-      apiLibs.forEach( (lib_obj) => {
-         if(lib_obj.repos.length > 1){
-            lib_obj.repos.forEach( (repo) => {
-               let url = new URL(util.format('repos/%s/%s', lib_obj.owner, repo),'https://api.github.com/')
+      return new Promise((resolve, reject) => {
+         json_obj.stable.githubAPI.forEach((lib_obj) => {
+
+            let options = {
+               'headers': {
+                  'User-Agent': 'Loomify'
+               },
+               'json': true,
+            }
+
+            if(lib_obj.path){
+               options.uri = util.format('%s/repos/%s/%s/%s','https://api.github.com', lib_obj.owner, lib_obj.repo, lib_obj.path)
+            }
+            else{
+               options.uri = util.format('%s/repos/%s/%s','https://api.github.com', lib_obj.owner, lib_obj.repo)
+            }
+
+            rpn(options)
+               .then((context) => {
+                  if(context.length){
+                     context.forEach((file_obj) => {
+                        options.uri = file_obj.download_url
+                        rpn(options)
+                        .pipe( fs.createWriteStream(util.format('%s/%s', dl_dir, file_obj.name) ))
+                        .on('error', (err) => { reject(err) })
+                        .on('close', () => { console.log(file_obj.name + ' written') });
+                     });
+                  }
+                  else{
+                     options.uri =  util.format('%s/%s/%s', options.uri, 'zipball', 'master'),
+                     console.log(options.uri);
+                     rpn(options)
+                     .pipe( fs.createWriteStream(util.format('%s/%s', dl_dir, context.name) ))
+                     .on('error', (err) => { reject(err) })
+                     .on('close', () => { console.log(context.name + ' written') });
+                  }
+               })
+               .catch((err) => {
+                  reject(err);
+               });
+         });
+      })
+   }
+   else if(version == 'latest'){
+      let apiLibs = json_obj.githubAPI;
+      let directLibs = json_obj.direct;
+      let daSpecial = json_obj.special;
+      let git_urls = [];
+      let dl_dir = './tmp';
+      var files_written = [];
+
+      return new Promise((resolve, reject) => {
+         fs.mkdir(dl_dir, (err) => {
+            if(err)
+               reject(err);
+         });
+
+         // read github urls and prep for request
+         apiLibs.forEach( (lib_obj) => {
+            if(lib_obj.repos.length > 1){
+               lib_obj.repos.forEach( (repo) => {
+                  let url = new URL(util.format('repos/%s/%s', lib_obj.owner, repo),'https://api.github.com/')
+                  git_urls.push({
+                     'library': repo,
+                     'url': url
+                  });
+               })
+            }
+            else{
+               let url = new URL(util.format('repos/%s/%s', lib_obj.owner, lib_obj.repos[0]),'https://api.github.com/')
                git_urls.push({
-                  'library': repo,
+                  'library': lib_obj.repos[0],
                   'url': url
                });
-            })
-         }
-         else{
-            let url = new URL(util.format('repos/%s/%s', lib_obj.owner, lib_obj.repos[0]),'https://api.github.com/')
-            git_urls.push({
-               'library': lib_obj.repos[0],
-               'url': url
-            });
-         }
-      });
+            }
+         });
 
-      // download each library with github api
-      git_urls.forEach( (obj) =>{
-         let options = {
-            'uri':  util.format('%s/%s/%s', obj.url.href, 'zipball', 'master'),
-            'headers': {
-               'User-Agent': 'Loomify'
-            },
-            'json': true,
-         };
-
-         let file_name = util.format('%s.%s', obj.library, 'zip');
-         rpn(options)
-            .pipe( fs.createWriteStream(dl_dir + '/' + file_name) )
-            .on('error', (err) => { reject(err) })
-            .on('close', () =>{ console.log( file_name + ' written') })
-      })
-
-      download each direct download
-      directLibs.forEach( (lib_obj) => {
-         let options = {
-            'uri': lib_obj.url,
-            'headers': {
-               'User-Agent': 'Loomify'
-            },
-            'json': true,
-         };
-
-         let file_name = util.format('%s.%s', lib_obj.library, 'zip');
-         rpn(options)
-            .pipe( fs.createWriteStream(dl_dir + '/' + file_name) )
-            .on('err', (err) => { reject(err) })
-            .on('close', () => { console.log( file_name + ' written') })
-      })
-
-      // download each special case file
-      daSpecial.forEach( (lib_obj) => {
-         if(lib_obj.source == 'github'){
+         // download each library with github api
+         git_urls.forEach( (obj) =>{
             let options = {
-               'uri': util.format('%s/repos/%s/%s/%s','https://api.github.com', lib_obj.owner, lib_obj.library, lib_obj.path),
+               'uri':  util.format('%s/%s/%s', obj.url.href, 'zipball', 'master'),
                'headers': {
                   'User-Agent': 'Loomify'
                },
                'json': true,
             };
 
+            let file_name = util.format('%s.%s', obj.library, 'zip');
             rpn(options)
-            .then((context) => {
-               let dir = lib_obj.library;
-               fs.mkdir(dl_dir + '/' + dir, (err) => {
-                  if(err){
-                     reject(err);
-                  }
-                  else{
-                     context.forEach((file_obj) => {
-                        options.uri = file_obj.download_url
-                        rpn(options)
-                        .pipe( fs.createWriteStream(util.format('%s/%s/%s', dl_dir, dir, file_obj.name) ))
-                        .on('error', (err) => { reject(err) })
-                        .on('close', () => { console.log(file_obj.name + ' written') });
-                     });
-                  }
+               .pipe( fs.createWriteStream(dl_dir + '/' + file_name) )
+               .on('error', (err) => { reject(err) })
+               .on('close', () =>{ console.log( file_name + ' written') })
+         })
+
+         // download each direct download
+         directLibs.forEach( (lib_obj) => {
+            let options = {
+               'uri': lib_obj.url,
+               'headers': {
+                  'User-Agent': 'Loomify'
+               },
+               'json': true,
+            };
+
+            let file_name = util.format('%s.%s', lib_obj.library, 'zip');
+            rpn(options)
+               .pipe( fs.createWriteStream(dl_dir + '/' + file_name) )
+               .on('err', (err) => { reject(err) })
+               .on('close', () => { console.log( file_name + ' written') })
+         })
+
+         // download each special case file
+         daSpecial.forEach( (lib_obj) => {
+            if(lib_obj.source == 'github'){
+               let options = {
+                  'uri': util.format('%s/repos/%s/%s/%s','https://api.github.com', lib_obj.owner, lib_obj.library, lib_obj.path),
+                  'headers': {
+                     'User-Agent': 'Loomify'
+                  },
+                  'json': true,
+               };
+
+               rpn(options)
+               .then((context) => {
+                  let dir = lib_obj.library;
+                  fs.mkdir(dl_dir + '/' + dir, (err) => {
+                     if(err){
+                        reject(err);
+                     }
+                     else{
+                        context.forEach((file_obj) => {
+                           options.uri = file_obj.download_url
+                           rpn(options)
+                           .pipe( fs.createWriteStream(util.format('%s/%s/%s', dl_dir, dir, file_obj.name) ))
+                           .on('error', (err) => { reject(err) })
+                           .on('close', () => { console.log(file_obj.name + ' written') });
+                        });
+                     }
+                  });
+               })
+               .catch((err) => {
+                  reject(err);
                });
-            })
-            .catch((err) => {
-               reject(err);
-            })
-         }
+            }
+         });
       });
+   }
+}
 
-   });
 
+exports.unzip = (zip_dir) => {
+   fs.mkdir('libraries', (err) => {
+      if(err){
+         console.log(err);
+      }
+   })
+   fs.readdir(zip_dir, (err, files) => {
+      console.log(files);
+      files.forEach((file) => {
+         fs.createReadStream(zip_dir + '/' + file)
+         .pipe(unzipper.Extract({ path: 'libraries' }));
+      })
+   })
 }
 
 

@@ -35,5 +35,8 @@
   },
   "devDependencies": {
     "eslint": "^5.16.0"
+  },
+  "resolutions": {
+    "mem": "^5.0.0"
   }
 }

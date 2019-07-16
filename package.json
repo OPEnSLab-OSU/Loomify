@@ -1,6 +1,6 @@
 {
   "name": "loomify",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "An easy way to parse C/C++ source code to JSON format to be used by the Loom Configurator.",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
